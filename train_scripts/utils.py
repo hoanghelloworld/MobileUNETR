@@ -4,6 +4,7 @@ import wandb
 import torch
 import random
 import numpy as np
+import warnings
 
 """
 Utils File Used for Training/Validation/Testing
@@ -31,9 +32,49 @@ def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar") -> None:
 
 
 ##################################################################################################
+def safe_load_model(model_path, map_location=None):
+    """
+    Safely load a model considering PyTorch version and safetensors availability
+    """
+    # Check PyTorch version
+    torch_version = tuple(map(int, torch.__version__.split('.')[:2]))
+    using_safe_torch = torch_version >= (2, 6)
+    
+    # Check if safetensors is available
+    try:
+        from safetensors.torch import load_file
+        has_safetensors = True
+    except ImportError:
+        has_safetensors = False
+        
+    # Check if a safetensors version exists
+    safetensor_path = model_path.replace('.pth', '.safetensors')
+    safetensor_path = safetensor_path.replace('.pt', '.safetensors')
+    safetensor_path = safetensor_path.replace('.bin', '.safetensors')
+    
+    # Try to load with safetensors first if the file exists
+    if os.path.exists(safetensor_path) and has_safetensors:
+        from safetensors.torch import load_file
+        print(f"Loading model using safetensors: {safetensor_path}")
+        return load_file(safetensor_path)
+    else:
+        # Fall back to torch.load with version check
+        if not using_safe_torch:
+            warnings.warn(
+                "You are using torch.load with PyTorch < 2.6.0, which has a known security vulnerability. "
+                "Consider upgrading PyTorch to 2.6+ or installing safetensors. "
+                "See: https://nvd.nist.gov/vuln/detail/CVE-2025-32434",
+                UserWarning
+            )
+            
+        print(f"Loading model using torch.load: {model_path}")
+        return torch.load(model_path, map_location=map_location)
+
+
+##################################################################################################
 def load_checkpoint(config, model, optimizer, load_optimizer=True):
     print("=> Loading checkpoint")
-    checkpoint = torch.load(config.checkpoint_file_name, map_location=config.device)
+    checkpoint = safe_load_model(config.checkpoint_file_name, map_location=config.device)
     model.load_state_dict(checkpoint["state_dict"])
 
     if load_optimizer:
