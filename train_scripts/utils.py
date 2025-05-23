@@ -68,7 +68,11 @@ def safe_load_model(model_path, map_location=None):
             )
             
         print(f"Loading model using torch.load: {model_path}")
-        return torch.load(model_path, map_location=map_location)
+        # Add weights_only=False parameter to address the vulnerability issue
+        if using_safe_torch:
+            return torch.load(model_path, map_location=map_location, weights_only=False)
+        else:
+            return torch.load(model_path, map_location=map_location)
 
 
 ##################################################################################################
