@@ -1,0 +1,63 @@
+# EfficientNet-V2-S Segmentation Configuration
+
+project: "efficientnet_v2s_segmentation"
+model_name: "efficientnet_v2_s_unet"
+
+variables:
+  num_classes: 1
+  image_size: 256
+
+dataset_parameters:
+  dataset_type: "segmentation"
+  train_dataset_args:
+    image_dir: "path/to/Train/Image"
+    mask_dir: "path/to/Train/Mask"
+  val_dataset_args:
+    image_dir: "path/to/Val/Image"
+    mask_dir: "path/to/Val/Mask"
+  train_dataloader_args:
+    batch_size: 8
+    shuffle: true
+    num_workers: 4
+  val_dataloader_args:
+    batch_size: 8
+    shuffle: false
+    num_workers: 4
+
+train_augmentation_args:
+  image_size: 256
+  horizontal_flip: true
+  vertical_flip: true
+  rotation: true
+  brightness_contrast: true
+
+test_augmentation_args:
+  image_size: 256
+
+training_parameters:
+  num_epochs: 100
+  seed: 42
+  grad_accumulate_steps: 1
+  checkpoint_save_dir: "checkpoints/"
+  load_checkpoint:
+    load_full_checkpoint: false
+    checkpoint_path: ""
+
+optimizer:
+  optimizer_type: "adam"
+  optimizer_args:
+    lr: 0.0001
+    weight_decay: 0.0001
+
+loss_fn:
+  loss_type: "bce_with_logits"
+  loss_args: {}
+
+ema:
+  enabled: false
+
+wandb_parameters:
+  project: "efficientnet_v2s_segmentation"
+  group: "efficientnet_experiments"
+  name: "efficientnet_v2s_baseline"
+  notes: "EfficientNet-V2-S for medical image segmentation"

@@ -24,6 +24,15 @@ def build_architecture(config):
 
         model = build_mobileunetr_s(config=config)
         return model
+    
+    elif config["model_name"] == "efficientnet_v2_s_unet":
+        from .efficientnet_unet import build_efficientnet_v2_s_unet
+        
+        model = build_efficientnet_v2_s_unet(
+            num_classes=config["variables"]["num_classes"],
+            pretrained=True
+        )
+        return model
 
     else:
         return ValueError(
